@@ -35,12 +35,11 @@ const getVal = (input: string, win = true) => {
 };
 
 const part2 = dataArr.reduce((acc, curr) => {
-  switch (true) {
-    case curr[1] === "X":
+  switch (curr[1]) {
+    case "X":
       // Lose
       return acc + getVal(curr[0], false);
-      break;
-    case curr[1] === "Y":
+    case "Y":
       // Draw
       return acc + 3 + (curr[0].charCodeAt(0) - 64);
     default:
