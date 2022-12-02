@@ -6,18 +6,19 @@ const data = fs.readFileSync("./data/day-2.txt", "utf-8");
 const dataArr = data.split("\n").map((item) => item.split(/\s/));
 
 const part1 = dataArr.reduce((acc, curr) => {
+  acc += curr[1].charCodeAt(0) - 87;
+
   switch (true) {
     case (curr[0] === "A" && curr[1] === "Y") ||
       (curr[0] === "B" && curr[1] === "Z") ||
       (curr[0] === "C" && curr[1] === "X"):
-      return acc + 6 + (curr[1].charCodeAt(0) - 87);
+      return acc + 6;
     case (curr[0] === "A" && curr[1] === "X") ||
       (curr[0] === "B" && curr[1] === "Y") ||
       (curr[0] === "C" && curr[1] === "Z"):
-      return acc + 3 + (curr[1].charCodeAt(0) - 87);
-      break;
+      return acc + 3;
     default:
-      return acc + curr[1].charCodeAt(0) - 87;
+      return acc;
   }
 }, 0);
 
