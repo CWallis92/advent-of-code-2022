@@ -39,20 +39,12 @@ class Stack {
     // return true if stack is empty
     return this.items.length == 0;
   }
-
-  printStack() {
-    let out = "";
-    this.items.forEach((item) => {
-      out += item;
-    });
-
-    return out;
-  }
 }
 
 const initialConfig = data.split("\n\n")[0];
 const instructions = data.split("\n\n")[1].split("\n");
 
+// Reverse to build stack properly
 const fullRows = initialConfig.split("\n").reverse();
 
 const rows = fullRows.slice(1).map((row) => {
@@ -69,35 +61,57 @@ const transposed = rows[0].map((_, colIndex) =>
 );
 
 // Remove trailing zeroes
-const stacks = transposed.map((stack) => {
+const stacks1 = transposed.map((stack) => {
+  const newStack = [...stack];
+
   return new Stack(
-    stack.indexOf("0") > -1 ? stack.slice(0, stack.indexOf("0")) : stack
+    newStack.indexOf("0") > -1
+      ? newStack.slice(0, newStack.indexOf("0"))
+      : newStack
+  );
+});
+
+const stacks2 = transposed.map((stack) => {
+  const newStack = [...stack];
+
+  return new Stack(
+    newStack.indexOf("0") > -1
+      ? newStack.slice(0, newStack.indexOf("0"))
+      : newStack
   );
 });
 
 instructions.forEach((instruction) => {
   const vals = instruction.match(/\d+/g).map((val) => +val);
 
-  // for (let i = 0; i < vals[0]; i++) {
-  //   const popped = stacks[vals[1] - 1].pop();
+  for (let i = 0; i < vals[0]; i++) {
+    const popped = stacks1[vals[1] - 1].pop();
 
-  //   if (popped) {
-  //     stacks[vals[2] - 1].push(popped);
-  //   }
-  // }
+    if (popped) {
+      stacks1[vals[2] - 1].push(popped);
+    }
+  }
 
   // Part 2
-  const multiPopped = stacks[vals[1] - 1].popMulti(vals[0]);
+  const multiPopped = stacks2[vals[1] - 1].popMulti(vals[0]);
 
   if (multiPopped) {
-    stacks[vals[2] - 1].push(...multiPopped);
+    stacks2[vals[2] - 1].push(...multiPopped);
   }
 });
 
-let tops = "";
+let tops1 = "";
 
-stacks.forEach((stack) => {
-  tops += stack.peek();
+stacks1.forEach((stack) => {
+  tops1 += stack.peek();
 });
 
-console.log("Solution:", tops);
+console.log("Part 1:", tops1);
+
+let tops2 = "";
+
+stacks2.forEach((stack) => {
+  tops2 += stack.peek();
+});
+
+console.log("Part 2:", tops2);
