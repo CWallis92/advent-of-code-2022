@@ -4,6 +4,9 @@ import * as fs from "fs";
 const data = fs.readFileSync("./data/day-7.txt", "utf-8");
 
 // Trees!
+// https://www.30secondsofcode.org/articles/s/js-data-structures-tree
+// https://www.freecodecamp.org/news/binary-search-tree-traversal-inorder-preorder-post-order-for-bst/
+
 class TreeNode {
   key: string;
   size: number;
