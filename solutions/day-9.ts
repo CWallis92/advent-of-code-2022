@@ -29,63 +29,41 @@ const moveTail = (head: number[], tail: number[]): number[] => {
   return [tail[0] + vert, tail[1] + hor];
 };
 
-let headCoord = [0, 0];
-let tailCoord = [0, 0];
-const visitedCoords = [[0, 0]];
+const playSnake = (numKnots: number) => {
+  const knots = Array.from(new Array(numKnots), (_) => [0, 0]);
+  const visitedCoords = [[0, 0]];
 
-instructions.forEach((instruction) => {
-  const dir = instruction[0];
-  const dist = +instruction.match(/\d+/)[0];
+  instructions.forEach((instruction) => {
+    const dir = instruction[0];
+    const dist = +instruction.match(/\d+/)[0];
 
-  for (let i = 0; i < dist; i++) {
-    headCoord = moveHead(headCoord, dir);
+    for (let i = 0; i < dist; i++) {
+      for (let knotIndex = knots.length - 1; knotIndex > 0; knotIndex--) {
+        if (knotIndex === knots.length - 1)
+          knots.splice(knotIndex, 1, moveHead(knots[knotIndex], dir));
 
-    if (shouldMoveTail(tailCoord, headCoord)) {
-      tailCoord = moveTail(headCoord, tailCoord);
+        if (shouldMoveTail(knots[knotIndex - 1], knots[knotIndex])) {
+          knots.splice(
+            knotIndex - 1,
+            1,
+            moveTail(knots[knotIndex], knots[knotIndex - 1])
+          );
 
-      if (
-        !visitedCoords.find(
-          (coord) => coord[0] === tailCoord[0] && coord[1] === tailCoord[1]
-        )
-      ) {
-        visitedCoords.push(tailCoord);
-      }
-    }
-  }
-});
-
-console.log("Part 1:", visitedCoords.length);
-
-const knots = Array.from(new Array(10), (_) => [0, 0]);
-const visitedCoords2 = [[0, 0]];
-
-instructions.forEach((instruction) => {
-  const dir = instruction[0];
-  const dist = +instruction.match(/\d+/)[0];
-
-  for (let i = 0; i < dist; i++) {
-    for (let knotIndex = knots.length - 1; knotIndex > 0; knotIndex--) {
-      if (knotIndex === knots.length - 1)
-        knots.splice(knotIndex, 1, moveHead(knots[knotIndex], dir));
-
-      if (shouldMoveTail(knots[knotIndex - 1], knots[knotIndex])) {
-        knots.splice(
-          knotIndex - 1,
-          1,
-          moveTail(knots[knotIndex], knots[knotIndex - 1])
-        );
-
-        if (
-          knotIndex === 1 &&
-          !visitedCoords2.find(
-            (coord) => coord[0] === knots[0][0] && coord[1] === knots[0][1]
-          )
-        ) {
-          visitedCoords2.push(knots[0]);
+          if (
+            knotIndex === 1 &&
+            !visitedCoords.find(
+              (coord) => coord[0] === knots[0][0] && coord[1] === knots[0][1]
+            )
+          ) {
+            visitedCoords.push(knots[0]);
+          }
         }
       }
     }
-  }
-});
+  });
 
-console.log("Part 2:", visitedCoords2.length);
+  return visitedCoords.length;
+};
+
+console.log("Part 1:", playSnake(2));
+console.log("Part 2:", playSnake(10));
