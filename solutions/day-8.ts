@@ -49,3 +49,43 @@ for (let row = 1; row < grid.length - 1; row++) {
 }
 
 console.log("Part 1:", visibleTrees);
+
+const getScore = (
+  row: number,
+  col: number,
+  trees = grid,
+  transposedTrees = transposed
+): number => {
+  const height = trees[row][col];
+
+  const lTrees = trees[row].slice(0, col).reverse();
+  const lIndex = lTrees.findIndex((tree) => tree >= height);
+  const lScore = lIndex === -1 ? lTrees.length : lIndex + 1;
+
+  const rTrees = trees[row].slice(col + 1);
+  const rIndex = rTrees.findIndex((tree) => tree >= height);
+  const rScore = rIndex === -1 ? rTrees.length : rIndex + 1;
+
+  const uTrees = transposedTrees[col].slice(0, row).reverse();
+  const uIndex = uTrees.findIndex((tree) => tree >= height);
+  const uScore = uIndex === -1 ? uTrees.length : uIndex + 1;
+
+  const dTrees = transposedTrees[col].slice(row + 1);
+  const dIndex = dTrees.findIndex((tree) => tree >= height);
+  const dScore = dIndex === -1 ? dTrees.length : dIndex + 1;
+
+  return lScore * rScore * uScore * dScore;
+};
+
+let maxScore = 0;
+
+for (let row = 1; row < grid.length - 1; row++) {
+  for (let col = 1; col < grid[1].length - 1; col++) {
+    // Check taller than others
+    const treeScore = getScore(row, col);
+
+    if (treeScore > maxScore) maxScore = treeScore;
+  }
+}
+
+console.log("Part 2:", maxScore);
