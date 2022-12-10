@@ -12,8 +12,8 @@ let instructionIndex = 0,
   signalStrength = 0;
 
 // Build screen
-const screenRow = Array.from(new Array(40), (_) => ".");
-const screen = Array.from(new Array(6), (_, index) => [...screenRow]);
+const screenRow = Array.from(new Array(40), (_) => " ");
+const screen = Array.from(new Array(6), (_) => [...screenRow]);
 
 while (instructionIndex < instructions.length) {
   const currScreenRow = Math.floor((cycle - 1) / 40);
