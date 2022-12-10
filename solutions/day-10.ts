@@ -13,15 +13,7 @@ let instructionIndex = 0,
 
 // Build screen
 const screenRow = Array.from(new Array(40), (_) => ".");
-const screen = Array.from(new Array(6), (_, index) => {
-  if (index === 0) {
-    const firstRow = [...screenRow];
-    firstRow.splice(0, 3, ...["#", "#", "#"]);
-    return firstRow;
-  }
-
-  return [...screenRow];
-});
+const screen = Array.from(new Array(6), (_, index) => [...screenRow]);
 
 while (instructionIndex < instructions.length) {
   const currScreenRow = Math.floor((cycle - 1) / 40);
