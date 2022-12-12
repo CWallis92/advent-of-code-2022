@@ -1,7 +1,7 @@
 import * as fs from "fs";
 
-const data = fs.readFileSync("./test-data/day-11.txt", "utf-8");
-// const data = fs.readFileSync("./data/day-11.txt", "utf-8");
+// const data = fs.readFileSync("./test-data/day-11.txt", "utf-8");
+const data = fs.readFileSync("./data/day-11.txt", "utf-8");
 
 class HeldItem {
   worryLevel: number;
@@ -10,6 +10,10 @@ class HeldItem {
   constructor(worryLevel = 0, heldBy = 0) {
     this.worryLevel = worryLevel;
     this.heldBy = heldBy;
+  }
+
+  get getWorryLevel() {
+    return this.worryLevel;
   }
 
   set updateWorry(newLevel: number) {
@@ -111,6 +115,9 @@ const monkeysData = data.split("\n\n");
 
 const monkeys: Monkey[] = [];
 
+// Keep worry level low by taking the LCM of all tests and modulo-ing worry level down to that
+let LCM = 1;
+
 monkeysData.forEach((monkey) => {
   const details = monkey.split("\n").map((line) => line.trim());
 
@@ -121,6 +128,8 @@ monkeysData.forEach((monkey) => {
     (item) => new HeldItem(+item, monkeyIndex)
   );
 
+  LCM *= +details[3].match(/\d+/)[0];
+
   const operation = getOperation(details[2]);
   const throwTo = getThrowTo(details.slice(3));
 
@@ -129,40 +138,23 @@ monkeysData.forEach((monkey) => {
 
 const playRounds = (numRounds: number) => {
   for (let round = 0; round < numRounds; round++) {
-    console.log(
-      "\nInspect states:",
-      monkeys.map((monkey) => monkey.countInspected)
-    );
-    console.log(
-      "Worry levels:",
-      monkeys.map((monkey) => monkey.items.map((item) => item.worryLevel)),
-      "\n\n"
-    );
-
-    monkeys.forEach((monkey, m) => {
+    monkeys.forEach((monkey) => {
       while (monkey.items.length > 0) {
         const currItem = monkey.items[0];
-        console.log(
-          `Initial worry for monkey ${m}, item ${0}: ${currItem.worryLevel}`
-        );
 
         monkey.inspectItem(0);
 
-        console.log(
-          `New worry for monkey ${m}, item ${0}: ${currItem.worryLevel}`
-        );
-
         const thrownTo = monkey.throwItem(0);
 
-        monkeys[thrownTo].catchItem(currItem);
+        currItem.updateWorry = currItem.getWorryLevel % LCM;
 
-        console.log("Thrown to:", thrownTo, "\n");
+        monkeys[thrownTo].catchItem(currItem);
       }
     });
   }
 };
 
-playRounds(2);
+playRounds(10000);
 
 const inspectedCounts = monkeys.map((monkey) => monkey.countInspected);
 
@@ -172,4 +164,4 @@ const monkeyBusiness = inspectedCounts
   .sort((a, b) => b - a)
   .slice(0, 2)
   .reduce((acc, curr) => acc * curr);
-console.log("Part 1:", monkeyBusiness);
+console.log("Part 2:", monkeyBusiness);
