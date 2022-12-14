@@ -116,15 +116,9 @@ const dropSand = (currCol: number, currRow: number): [number, number] => {
   return [col, bottom - 1];
 };
 
-let newCol = -1,
-  newRow = -1;
-
 // Keep dropping sand until can't be dropped
 while (true) {
   const [dropCol, dropRow] = dropSand(sandCol, 0);
-
-  newCol = dropCol;
-  newRow = dropRow;
 
   if (dropCol === -1 && dropRow === -1) break;
 
