@@ -68,9 +68,7 @@ const divider2 = [[6]];
 
 allPackets.push(divider1, divider2);
 
-const sorted = allPackets.sort((a, b) => {
-  return comparePackets(b, a);
-});
+const sorted = allPackets.sort((a, b) => comparePackets(b, a));
 
 const div1Loc = sorted.findIndex((packet) => packet === divider1) + 1;
 const div2Loc = sorted.findIndex((packet) => packet === divider2) + 1;
