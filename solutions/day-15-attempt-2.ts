@@ -36,9 +36,8 @@ const [minX, maxX] = sensorData.reduce(
 const rowLength = maxX - minX + 1;
 const xOffset = -minX;
 
-const getEmpties = (rowIndex: number) => {
-  let firstEmpty = rowLength,
-    lastEmpty = 0;
+const getEmpties = (rowIndex: number, gridSize = rowIndex * 2) => {
+  const emptySegments = [];
 
   sensorData.forEach(({ loc, beacon }) => {
     const dist = Math.abs(loc[0] - beacon[0]) + Math.abs(loc[1] - beacon[1]);
@@ -49,58 +48,74 @@ const getEmpties = (rowIndex: number) => {
       const leftIndex = Math.max(loc[0] - rowDist + xOffset, 0);
       const rightIndex = Math.min(loc[0] + rowDist + xOffset, rowLength - 1);
 
-      if (leftIndex < firstEmpty) firstEmpty = leftIndex;
-      if (rightIndex > lastEmpty) lastEmpty = rightIndex;
+      emptySegments.push(
+        Array.from(
+          new Array(rightIndex - leftIndex + 1),
+          (_, index) => index + leftIndex
+        )
+      );
     }
   });
 
-  // This part doesn't account for possible distress beacon locaions!
-  // TODO: Amend based on array of emptyVals
-  let totalEmpty = lastEmpty - firstEmpty + 1;
+  const allEmptyVals = [...new Set(emptySegments.flat())]
+    .map((val) => val - xOffset)
+    .sort((a, b) => a - b);
+
+  const emptyValsInRange = allEmptyVals.filter(
+    (val) => val >= 0 && val <= gridSize
+  );
+
+  let distressBeaconCoords: null | [number, number] = null;
+
+  if (emptyValsInRange.length === gridSize) {
+    const x = emptyValsInRange.findIndex((val, index) => val !== index);
+
+    distressBeaconCoords = [x, rowIndex];
+  }
 
   const checkedBeacons = [];
 
   sensorData.forEach(({ loc, beacon }) => {
-    if (loc[1] === rowIndex && (loc[0] >= firstEmpty || loc[0] <= lastEmpty)) {
-      totalEmpty--;
-    }
+    if (loc[1] === rowIndex) {
+      const locIndex = allEmptyVals.indexOf(loc[0]);
 
+      if (locIndex > -1) allEmptyVals.splice(locIndex, 1);
+    }
     if (
       beacon[1] === rowIndex &&
-      (beacon[0] >= firstEmpty || beacon[0] <= lastEmpty) &&
       !checkedBeacons.find(
         (checkedBeacon) =>
           checkedBeacon[0] === beacon[0] && checkedBeacon[1] === beacon[1]
       )
     ) {
-      checkedBeacons.push(beacon);
-      totalEmpty--;
+      const beaconIndex = allEmptyVals.indexOf(beacon[0]);
+
+      if (beaconIndex > -1) {
+        allEmptyVals.splice(beaconIndex, 1);
+        checkedBeacons.push(beacon);
+      }
     }
   });
 
-  return { firstEmpty, lastEmpty, total: totalEmpty };
+  return { total: allEmptyVals.length, distressBeaconCoords };
 };
 
 console.log("Part 1:", getEmpties(10).total);
 
-// const checkAllRows = (rowIndex) => {
-//   let y = 0;
-//   let x = 0;
+const checkAllRows = (gridSize) => {
+  let y = 0;
 
-//   while (y <= rowIndex) {
-//     const { invalidValsInRange } = getEmpties(y, rowIndex);
+  while (y <= gridSize) {
+    const { distressBeaconCoords } = getEmpties(y, gridSize);
 
-//     if (invalidValsInRange.length === rowIndex - 1) {
-//       x = invalidValsInRange[0];
-//       break;
-//     }
+    if (distressBeaconCoords) return distressBeaconCoords;
 
-//     y++;
-//   }
+    y++;
+  }
 
-//   return [x, y];
-// };
+  return [null, null];
+};
 
-// const [x, y] = checkAllRows(20);
+const [x, y] = checkAllRows(20);
 
-// console.log("Part 2:", 4000000 * x + y);
+console.log("Part 2:", 4000000 * x + y);
