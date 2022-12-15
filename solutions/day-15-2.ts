@@ -26,7 +26,7 @@ const getExclusions = (
   empties: Empties[],
   gridMin?: number,
   gridMax?: number
-): { gaps: number[]; emptyLength: number } => {
+): number[] => {
   const exclusions: number[] = [];
 
   const emptiesMin = empties.reduce((acc, curr) => {
@@ -60,13 +60,20 @@ const getExclusions = (
       return;
     }
 
-    const containedGap = gaps.findIndex(
-      (gap) => start <= gap[0] && end >= gap[1]
-    );
+    // Deal with fully containing: There could be multiple
+    let gapIndex = 0,
+      hasFullyContained = false;
 
-    if (containedGap > -1) {
-      // New fully contains old: replace
-      gaps.splice(containedGap, 1, [start, end]);
+    while (gapIndex < gaps.length) {
+      if (start <= gaps[gapIndex][0] && end >= gaps[gapIndex][1]) {
+        // New fully contains old: replace
+        gaps.splice(gapIndex, 1);
+        hasFullyContained = true;
+      } else gapIndex++;
+    }
+
+    if (hasFullyContained) {
+      gaps.push([start, end]);
       return;
     }
 
@@ -92,18 +99,10 @@ const getExclusions = (
 
   const sortedGaps = gaps.sort((a, b) => a[0] - b[0]);
 
-  let totalEmpty =
-    sortedGaps.length > 0 ? sortedGaps[0][1] - sortedGaps[0][0] + 1 : 0;
-
   // Add gaps
   if (sortedGaps.length > 1) {
     for (let i = 0; i < sortedGaps.length - 1; i++) {
       const gapSize = sortedGaps[i + 1][0] - sortedGaps[i][1];
-
-      totalEmpty +=
-        sortedGaps[i + 1][1] -
-        sortedGaps[i + 1][0] +
-        (sortedGaps[i + 1][0] === sortedGaps[i][1] ? 0 : 1);
 
       if (gapSize > 1) {
         exclusions.push(
@@ -125,7 +124,7 @@ const getExclusions = (
       )
     );
 
-  return { gaps: [...new Set(exclusions)], emptyLength: totalEmpty };
+  return [...new Set(exclusions)];
 };
 
 const checkRow = (
@@ -140,6 +139,12 @@ const checkRow = (
 
     if (distToRow <= dist) {
       // Sensor will add empty values
+      if (
+        loc[0] - dist + distToRow > gridMax ||
+        loc[0] + dist - distToRow < gridMin
+      )
+        return;
+
       const rowStart = Math.max(loc[0] - dist + distToRow, gridMin);
       const rowEnd = Math.min(loc[0] + dist - distToRow, gridMax);
 
@@ -147,40 +152,20 @@ const checkRow = (
     }
   });
 
-  const { gaps, emptyLength } = getExclusions(
+  const gaps = getExclusions(
     empties,
     gridMin > -Infinity ? gridMin : undefined,
     gridMax < Infinity ? gridMax : undefined
   );
 
-  let adjustedEmptyLength = emptyLength;
-  const checkedBeacons = [];
-
-  sensorData.forEach(({ loc, beacon }) => {
-    if (loc[1] === rowIndex) adjustedEmptyLength--;
-
-    if (
-      beacon[1] === rowIndex &&
-      !checkedBeacons.find(
-        (checkedBeacon) =>
-          checkedBeacon[0] === beacon[0] && checkedBeacon[1] === beacon[1]
-      )
-    ) {
-      checkedBeacons.push(beacon);
-      adjustedEmptyLength--;
-    }
-  });
-
-  return { gaps, emptyLength: adjustedEmptyLength };
+  return gaps;
 };
-
-// console.log("Part 1:", checkRow(11));
 
 const checkAllRows = (gridMin: number, gridMax: number) => {
   let y = gridMin;
 
   while (y <= gridMax) {
-    const { gaps } = checkRow(y, gridMin, gridMax);
+    const gaps = checkRow(y, gridMin, gridMax);
 
     if (gaps.length === 1) return [gaps[0], y];
 

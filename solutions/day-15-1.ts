@@ -1,7 +1,7 @@
 import * as fs from "fs";
 
-const data = fs.readFileSync("./test-data/day-15.txt", "utf-8");
-// const data = fs.readFileSync("./data/day-15.txt", "utf-8");
+// const data = fs.readFileSync("./test-data/day-15.txt", "utf-8");
+const data = fs.readFileSync("./data/day-15.txt", "utf-8");
 
 const sensorData: { loc: number[]; beacon: number[] }[] = [];
 
@@ -36,7 +36,7 @@ const [minX, maxX] = sensorData.reduce(
 const rowLength = maxX - minX + 1;
 const xOffset = -minX;
 
-const getEmpties = (rowIndex: number, gridSize = rowIndex * 2) => {
+const getEmpties = (rowIndex: number) => {
   const emptySegments = [];
 
   sensorData.forEach(({ loc, beacon }) => {
@@ -60,18 +60,6 @@ const getEmpties = (rowIndex: number, gridSize = rowIndex * 2) => {
   const allEmptyVals = [...new Set(emptySegments.flat())]
     .map((val) => val - xOffset)
     .sort((a, b) => a - b);
-
-  const emptyValsInRange = allEmptyVals.filter(
-    (val) => val >= 0 && val <= gridSize
-  );
-
-  let distressBeaconCoords: null | [number, number] = null;
-
-  if (emptyValsInRange.length === gridSize) {
-    const x = emptyValsInRange.findIndex((val, index) => val !== index);
-
-    distressBeaconCoords = [x, rowIndex];
-  }
 
   const checkedBeacons = [];
 
@@ -97,25 +85,7 @@ const getEmpties = (rowIndex: number, gridSize = rowIndex * 2) => {
     }
   });
 
-  return { total: allEmptyVals.length, distressBeaconCoords };
+  return allEmptyVals.length;
 };
 
-console.log("Part 1:", getEmpties(10).total);
-
-const checkAllRows = (gridSize) => {
-  let y = 0;
-
-  while (y <= gridSize) {
-    const { distressBeaconCoords } = getEmpties(y, gridSize);
-
-    if (distressBeaconCoords) return distressBeaconCoords;
-
-    y++;
-  }
-
-  return [null, null];
-};
-
-const [x, y] = checkAllRows(20);
-
-console.log("Part 2:", 4000000 * x + y);
+console.log("Part 1:", getEmpties(2000000));
