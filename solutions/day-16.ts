@@ -37,12 +37,38 @@ valveData.forEach((valve) => {
 
 // Potential = pressure release * minutes active
 const getPotential = (end: string, startTime = 0) =>
-  (30 - startTime) * valveGraph[end].rate;
+  (30 - startTime + 1) * valveGraph[end].rate;
 
 // TODO: Use a checker for console.log to simulate the example and work out what's going wrong
 // If currTime === 1 && startValve === 'AA'
 // If currTime === 2 && startValve === 'DD' && prevTwoNodes = ['AA']
 // ...
+
+const logToConsole = (time, valve, prevTwoNodes, openValve, currPressure) => {
+  return (
+    (time === 1 && valve === "AA" && prevTwoNodes.length === 0 && !openValve) ||
+    (time === 2 && valve === "DD" && prevTwoNodes.length === 1 && openValve) ||
+    (time === 4 &&
+      valve === "CC" &&
+      prevTwoNodes[0] === "DD" &&
+      prevTwoNodes[1] === "AA" &&
+      !openValve) ||
+    (time === 5 &&
+      valve === "BB" &&
+      prevTwoNodes[0] === "CC" &&
+      prevTwoNodes[1] === "DD" &&
+      openValve &&
+      currPressure === 560) ||
+    (time === 7 &&
+      valve === "AA" &&
+      prevTwoNodes[0] === "DD" &&
+      prevTwoNodes[1] === "CC" &&
+      !openValve)
+    // THis bit isn't working
+    // &&
+    // currPressure === 885
+  );
+};
 
 const fullJourneyPressure = (
   startValve = "AA",
@@ -52,6 +78,17 @@ const fullJourneyPressure = (
   prevTwoNodes: string[] = [],
   openValve = false
 ) => {
+  if (
+    logToConsole(currTime, startValve, prevTwoNodes, openValve, currPressure)
+  ) {
+    console.log("Time:", currTime);
+    console.log("Valve:", startValve);
+    console.log("Pressure:", currPressure);
+    console.log("Remaining:", remainingValvesWithFlow);
+    console.log("Open valve:", openValve);
+    console.log("Potential:", getPotential(startValve, currTime + 1), "\n");
+  }
+
   // Stopping criteria: Time expired
   if (currTime >= 30) return currPressure;
 
@@ -59,8 +96,8 @@ const fullJourneyPressure = (
 
   if (openValve && newRemaining.indexOf(startValve) > -1) {
     // Reduce remaining valves to visit
-    currPressure += getPotential(startValve, currTime);
     currTime++;
+    currPressure += getPotential(startValve, currTime);
 
     newRemaining = remainingValvesWithFlow.filter(
       (valve) => valve !== startValve
@@ -89,18 +126,6 @@ const fullJourneyPressure = (
       return currPressure;
 
     if (newRemaining.indexOf(valve) > -1) {
-      // Try not opening
-      validPressures.push(
-        fullJourneyPressure(
-          valve,
-          newRemaining,
-          currPressure,
-          currTime + 1,
-          newPrevs,
-          false
-        )
-      );
-
       // Try opening
       validPressures.push(
         fullJourneyPressure(
@@ -113,6 +138,18 @@ const fullJourneyPressure = (
         )
       );
     }
+
+    // Try not opening
+    validPressures.push(
+      fullJourneyPressure(
+        valve,
+        newRemaining,
+        currPressure,
+        currTime + 1,
+        newPrevs,
+        false
+      )
+    );
   });
 
   return Math.max(...validPressures, currPressure);
