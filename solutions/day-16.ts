@@ -1,12 +1,9 @@
 import * as fs from "fs";
-import { Graph, strComparator } from "../utils/graph";
 
 const data = fs.readFileSync("./test-data/day-16.txt", "utf-8");
 // const data = fs.readFileSync("./data/day-16.txt", "utf-8");
 
 const valveData = data.split("\n");
-
-const valves = valveData.map((valve) => valve.split(" ")[1]);
 const valvesWithFlow = valveData
   .filter((valve) => {
     const rate = valve.match(/\d+/)[0];
@@ -14,37 +11,111 @@ const valvesWithFlow = valveData
     return parseInt(rate) > 0;
   })
   .map((valve) => valve.split(" ")[1]);
-const totalValvesWithFlow = valvesWithFlow.length;
 
-console.log("Valves with flow:", valvesWithFlow);
-
-const valveGraph = new Graph(strComparator);
+const valveGraph: { [name: string]: { rate: number; neighbours: string[] } } =
+  {};
 
 valveData.forEach((valve) => {
   const valveName = valve.split(" ")[1];
+
   const leadsTo = valve
     .split(/to valve/)[1]
     .replace(/s/, "")
     .replace(/ /g, "")
     .split(",");
 
+  const rate = parseInt(valve.match(/\d+/)[0]);
+
+  const neighbours: string[] = [];
+
   leadsTo.forEach((endValve) => {
-    valveGraph.addEdge(valveName, endValve);
+    neighbours.push(endValve);
   });
+
+  valveGraph[valveName] = { neighbours, rate };
 });
 
-console.log(valveGraph);
+// Potential = pressure release * minutes active
+const getPotential = (end: string, startTime = 0) =>
+  (30 - startTime) * valveGraph[end].rate;
 
-console.log(
-  "Valve graph:",
-  valveGraph.breadthFirstSearch(valveGraph.nodes.get("AA"))
-);
+// TODO: Use a checker for console.log to simulate the example and work out what's going wrong
+// If currTime === 1 && startValve === 'AA'
+// If currTime === 2 && startValve === 'DD' && prevTwoNodes = ['AA']
+// ...
 
-const minutesToTurnOn = valvesWithFlow.length;
+const fullJourneyPressure = (
+  startValve = "AA",
+  remainingValvesWithFlow = valvesWithFlow,
+  currPressure = 0,
+  currTime = 1,
+  prevTwoNodes: string[] = [],
+  openValve = false
+) => {
+  // Stopping criteria: Time expired
+  if (currTime >= 30) return currPressure;
 
-// Part 1:
-// Use BFS to determine the distance between meaningful valves (AA, and all valves with non-zero flow rate)
-// DFS on this new graph, to find the path with max value, where the path's lenght is <= 30
-// https://adrianmejia.com/data-structures-for-beginners-graphs-time-complexity-tutorial/#:~:text=A%20graph%20is%20a%20data,edges%20connected%20to%20a%20vertex.
+  let newRemaining = [...remainingValvesWithFlow];
 
-// const minPath = route.path("S", "E", { cost: true }) as PathOut;
+  if (openValve && newRemaining.indexOf(startValve) > -1) {
+    // Reduce remaining valves to visit
+    currPressure += getPotential(startValve, currTime);
+    currTime++;
+
+    newRemaining = remainingValvesWithFlow.filter(
+      (valve) => valve !== startValve
+    );
+  }
+
+  // Stopping criteria: All valves activated
+  if (newRemaining.length === 0) return currPressure;
+
+  const nextValves = valveGraph[startValve].neighbours;
+
+  const validPressures: number[] = [];
+
+  // Efficiency: prevent back and forth
+  const newPrevs = [...prevTwoNodes];
+  if (newPrevs.length === 2) newPrevs.pop();
+  newPrevs.unshift(startValve);
+
+  nextValves.forEach((valve) => {
+    // Efficiency: prevent back and forth
+    if (
+      newPrevs.length === 2 &&
+      valve === newPrevs[1] &&
+      startValve === newPrevs[0]
+    )
+      return currPressure;
+
+    if (newRemaining.indexOf(valve) > -1) {
+      // Try not opening
+      validPressures.push(
+        fullJourneyPressure(
+          valve,
+          newRemaining,
+          currPressure,
+          currTime + 1,
+          newPrevs,
+          false
+        )
+      );
+
+      // Try opening
+      validPressures.push(
+        fullJourneyPressure(
+          valve,
+          newRemaining,
+          currPressure,
+          currTime + 1,
+          newPrevs,
+          true
+        )
+      );
+    }
+  });
+
+  return Math.max(...validPressures, currPressure);
+};
+
+console.log("Total pressure:", fullJourneyPressure());
